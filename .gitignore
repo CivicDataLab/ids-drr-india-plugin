@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Runtime chart output
+reports/assets/charts/*
+!reports/assets/charts/.gitkeep
+
+# Editor / OS
+.DS_Store
+.venv/
