@@ -147,6 +147,7 @@ bold_table_body_style = ParagraphStyle(
     alignment=1,
 )
 
+
 async def fetch_chart(client, chart_payload, resource_id):
     output_path = ASSETS_DIR / "charts" / Faker().file_name(extension="png")
     try:
@@ -1151,8 +1152,7 @@ async def append_insights_section(
             ):
                 high_hazard_district = district_with_highest_hazard_score.name.title()
                 prefix = (
-                    f"{high_hazard_district} needs effort on Hazard risk "
-                    f"reduction as "
+                    f"{high_hazard_district} needs effort on Hazard risk reduction as "
                 )
                 if area_inundated_pct_for_dist_with_high_hazard is not None:
                     main_insights.append(
@@ -1388,7 +1388,9 @@ def append_data_sources_section(elements):
     bhuvan_url = "https://bhuvan-app1.nrsc.gov.in/disaster/disaster.php?id=flood"
     worldpop_url = "https://hub.worldpop.org/project/categories?id=3"
     drims_url = "https://www.asdma.gov.in/reports.html"
-    tenders_url = "https://assamtenders.gov.in/nicgep/app?page=WebTenderStatusLists&service=page"
+    tenders_url = (
+        "https://assamtenders.gov.in/nicgep/app?page=WebTenderStatusLists&service=page"
+    )
     list_of_sources = [
         f"Source for Inundation Data: <u><a href='{bhuvan_url}'>Bhuvan</a></u>",
         (
