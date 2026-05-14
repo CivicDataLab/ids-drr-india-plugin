@@ -149,18 +149,6 @@ bold_table_body_style = ParagraphStyle(
     alignment=1,
 )
 
-# Global variables to set state and time period in page footers
-page_level_state = ""
-page_level_time_period = ""
-
-
-def set_page_level_state_and_time_period(state, time_period):
-    global page_level_state
-    global page_level_time_period
-    page_level_state = state
-    page_level_time_period = time_period
-
-
 async def fetch_chart(client, chart_payload, resource_id):
     output_path = ASSETS_DIR / "charts" / Faker().file_name(extension="png")
     try:
@@ -391,86 +379,74 @@ def get_last_three_months(date_obj):
     ]
 
 
-def add_header_footer(canvas_obj, doc):
-    """
-    Add a header and footer to each page.
-
-    Args:
-        canvas_obj: The canvas object.
-        doc: The document object.
-
-    """
-    width, height = A4
-
-    # Add an image to the left in the header
-    header_image_path = str(ASSETS_DIR / "logos" / "IDS_DRR_Logo.png")
-    try:
-        canvas_obj.drawImage(
-            header_image_path,
-            40,
-            height - 50,
-            width=260,
-            height=30,
-            preserveAspectRatio=True,
-            mask="auto",
-        )
-    except Exception:
-        logger.exception("Error loading header image")
-
-    # Header
-    # header_text = "IDS-DRR | Intelligent Data Solution for Disaster Risk Reduction"
-    # canvas_obj.setFont("Helvetica-Bold", 8)
-    # canvas_obj.drawString(40, height - 30, header_text)
-
-    # Add an image to the right in the header
-    header_image_path = str(ASSETS_DIR / "logos" / "CDL_Primary_Logo.png")
-    # draw Image with background transparent
-    try:
-        canvas_obj.drawImage(
-            header_image_path,
-            width - 100,
-            height - 60,
-            width=90,
-            height=50,
-            preserveAspectRatio=True,
-            mask="auto",
-        )
-    except Exception:
-        logger.exception("Error loading header image")
-
-    # Footer
-    footer_text = f"State Report: {page_level_state} | {page_level_time_period}"
-    canvas_obj.setFont("NotoSans" if font_registered else "Helvetica", 8)
-    canvas_obj.drawString(40, 30, footer_text)  # Left-justified footer text
-
-    # Page number on the right in the footer of {doc.page_count}
-    page_number_text = f"Page {doc.page}"
-    footer_width = pdfmetrics.stringWidth(
-        page_number_text, "NotoSans" if font_registered else "Helvetica", 10
-    )
-    canvas_obj.drawString(
-        width - footer_width - 40, 30, page_number_text
-    )  # Right-aligned page number
-
-
 class CustomDocTemplate(SimpleDocTemplate):
-    """Custom SimpleDocTemplate to add header and footer."""
+    """Custom SimpleDocTemplate that draws a per-page header and footer carrying state and time-period."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, state_name="", time_period_string="", **kwargs):
         super().__init__(*args, **kwargs)
+        self.state_name = state_name
+        self.time_period_string = time_period_string
+
+    def add_header_footer(self, canvas_obj, doc):
+        """Add a header and footer to each page."""
+        width, height = A4
+
+        # Add an image to the left in the header
+        header_image_path = str(ASSETS_DIR / "logos" / "IDS_DRR_Logo.png")
+        try:
+            canvas_obj.drawImage(
+                header_image_path,
+                40,
+                height - 50,
+                width=260,
+                height=30,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+        except Exception:
+            logger.exception("Error loading header image")
+
+        # Add an image to the right in the header
+        header_image_path = str(ASSETS_DIR / "logos" / "CDL_Primary_Logo.png")
+        try:
+            canvas_obj.drawImage(
+                header_image_path,
+                width - 100,
+                height - 60,
+                width=90,
+                height=50,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+        except Exception:
+            logger.exception("Error loading header image")
+
+        # Footer
+        footer_text = f"State Report: {self.state_name} | {self.time_period_string}"
+        canvas_obj.setFont("NotoSans" if font_registered else "Helvetica", 8)
+        canvas_obj.drawString(40, 30, footer_text)  # Left-justified footer text
+
+        # Page number on the right in the footer
+        page_number_text = f"Page {doc.page}"
+        footer_width = pdfmetrics.stringWidth(
+            page_number_text, "NotoSans" if font_registered else "Helvetica", 10
+        )
+        canvas_obj.drawString(
+            width - footer_width - 40, 30, page_number_text
+        )  # Right-aligned page number
 
     def build(
         self,
         flowables,
-        on_first_page=add_header_footer,
-        on_later_pages=add_header_footer,
+        on_first_page=None,
+        on_later_pages=None,
         canvasmaker=canvas.Canvas,
     ):
         """Overridden build method to add header and footer."""
         super().build(
             flowables,
-            onFirstPage=on_first_page,
-            onLaterPages=on_later_pages,
+            onFirstPage=on_first_page or self.add_header_footer,
+            onLaterPages=on_later_pages or self.add_header_footer,
             canvasmaker=canvasmaker,
         )
 
@@ -623,11 +599,14 @@ async def generate_report(request):
         # Set the type filter based on state.
         state = await sync_to_async(Geography.objects.get)(code=geo_code, type="STATE")
 
-        set_page_level_state_and_time_period(state.name, time_period_string)
-
         # Prepare PDF buffer and styles
         pdf_buffer = BytesIO()
-        doc = CustomDocTemplate(pdf_buffer, pagesize=A4)
+        doc = CustomDocTemplate(
+            pdf_buffer,
+            pagesize=A4,
+            state_name=state.name,
+            time_period_string=time_period_string,
+        )
 
         doc.topMargin = 1 * inch
         doc.bottomMargin = 1 * inch
