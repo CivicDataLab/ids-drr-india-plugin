@@ -1,4 +1,6 @@
+import calendar
 import datetime
+import http
 import logging
 from collections import defaultdict
 from io import BytesIO
@@ -35,6 +37,9 @@ from plugin.config import CHART_API_BASE_URL, load_reports
 
 logger = logging.getLogger(__name__)
 
+
+# Number of highest-risk districts to feature in the report tables and charts.
+TOP_DISTRICT_COUNT = 5
 
 chart_colors = ["#89672A", "#3B8F44", "#C41C8D", "#FB4E93", "#7B4DD9"]
 
@@ -165,7 +170,7 @@ async def fetch_chart(client, chart_payload, resource_id):
             json=chart_payload,
             timeout=timeout,
         )
-        if response.status_code != 200:
+        if response.status_code != http.HTTPStatus.OK:
             logger.error(
                 "Failed to fetch chart: %s %s", response.status_code, response.text
             )
@@ -208,7 +213,7 @@ async def get_top_vulnerable_districts(time_period, geo_filter=None):
 
         final_results.sort(key=lambda x: x.value, reverse=True)
 
-        return final_results[:5]
+        return final_results[:TOP_DISTRICT_COUNT]
 
     return await sync_to_async(filter_data)()
 
@@ -277,8 +282,9 @@ def generate_financial_year_months(time_period):
     # Parse the input time_period
     year, month = map(int, time_period.split("_"))
 
-    # Determine the financial year start and end
-    if month <= 3:  # Financial year starts in April
+    # Determine the financial year start and end. India's financial year
+    # starts in April, so Jan-Mar belongs to the previous FY.
+    if month <= calendar.MARCH:
         start_year = year - 1
         end_year = year
     else:
@@ -671,7 +677,7 @@ async def generate_report(request):
                 time_period, state.code
             )
 
-            if len(top_vulnerable_districts_data_obj) < 5:
+            if len(top_vulnerable_districts_data_obj) < TOP_DISTRICT_COUNT:
                 return HttpResponse(
                     "Error generating report. Vulnerable Districts not found for the given state",
                     status=500,
@@ -998,7 +1004,7 @@ async def append_insights_section(
     )
     # pick first three items in the list
 
-    if len(major_indicators_districts) >= 5:
+    if len(major_indicators_districts) >= TOP_DISTRICT_COUNT:
         major_indicators_districts_top_3 = major_indicators_districts[:-2]
 
         # Get district that received minimum amount from flood tenders for given time period
@@ -1326,8 +1332,8 @@ async def add_sdrf_section_for_top_districts(elements, time_period, geo_filter):
 def identify_and_get_prev_financial_years(time_period, number_of_years=3):
     time_period_parsed = datetime.datetime.strptime(time_period, "%Y_%m")
 
-    # check if the month is before or after march
-    if time_period_parsed.month <= 3:
+    # India's financial year starts in April, so Jan-Mar belongs to the previous FY.
+    if time_period_parsed.month <= calendar.MARCH:
         current_year = time_period_parsed.year - 1
     else:
         current_year = time_period_parsed.year
