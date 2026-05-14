@@ -215,7 +215,7 @@ async def get_top_vulnerable_districts(time_period, geo_filter=None):
 
 
 # Group data by geography
-async def group_by_geography(data_list, expected_indicators=[]):
+async def group_by_geography(data_list, expected_indicators=()):
     grouped_data = defaultdict(lambda: {"geography": None, "indicators": {}})
 
     for item in data_list:
@@ -390,11 +390,10 @@ async def get_latest_time_period(geo_code=None):
 
 def get_last_three_months(date_obj):
     last_3_months = [(date_obj.month - i - 1) % 12 + 1 for i in range(3)]
-    last_3_months_str = [
+    return [
         f"{date_obj.year - ((date_obj.month - i - 1) // 12):04d}_{last_3_months[i]:02d}"
         for i in range(3)
     ]
-    return last_3_months_str
 
 
 def add_header_footer(canvas_obj, doc):
@@ -832,7 +831,7 @@ async def generate_report(request):
                 )
                 for indicator in [col["slug"] for col in table_2_config["columns"]]
             ]
-            row = [Paragraph(data["geography"].name, table_body_style)] + values
+            row = [Paragraph(data["geography"].name, table_body_style), *values]
             district_table_data.append(row)
 
         district_table = await get_table(
@@ -956,8 +955,7 @@ def sort_data_dict_and_return_highest_key(data_dict):
     if not data_dict:  # Handle empty dictionary
         return None
 
-    sorted_items = sorted(data_dict.items(), key=lambda item: item[1], reverse=True)
-    return sorted_items
+    return sorted(data_dict.items(), key=lambda item: item[1], reverse=True)
 
 
 async def get_cumulative_indicator_value_for_last_three_years(
