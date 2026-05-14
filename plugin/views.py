@@ -1,44 +1,38 @@
 import datetime
 import logging
-from faker import Faker
 import os
-from functools import lru_cache
+from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
-from unicodedata import category
 
-from django.http.response import async_to_sync
 import httpx
 from asgiref.sync import sync_to_async
-from django.db.models import Q, F, Sum
+from django.conf import settings
+from django.db.models import F, Q, Sum
 from django.http import HttpResponse
+from faker import Faker
+from layer.models import Data, Geography
 from reportlab.lib import colors
-from reportlab.lib.colors import HexColor, Color
+from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    Image,
+    ListFlowable,
+    ListItem,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    Image,
-    PageBreak,
-    ListFlowable,
-    ListItem,
 )
 
-from django.conf import settings
-from layer.models import Data, Geography, Indicators
 from plugin.config import CHART_API_BASE_URL, load_reports
-
-from collections import defaultdict
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +44,6 @@ def register_font(
     font_name, font_url_bold=None, font_url_regular=None, font_url_italic=None
 ):
     """Downloads and registers a Font with ReportLab, defaults to Helvetica if fails."""
-
     if font_url_bold or font_url_regular or font_url_italic:
         if font_url_bold:
             pdfmetrics.registerFont(TTFont(f"{font_name}-Bold", font_url_bold))
@@ -62,8 +55,7 @@ def register_font(
             pdfmetrics.registerFont(TTFont(f"{font_name}-Italic", font_url_italic))
 
         return True  # Indicate success
-    else:
-        return False
+    return False
 
 
 # Custom Styles
@@ -178,12 +170,11 @@ async def fetch_chart(client, chart_payload, resource_id):
             with open(output_path, "wb") as f:
                 f.write(response.content)
             return output_path
-        else:
-            logger.error(
-                "Failed to fetch chart: %s %s", response.status_code, response.text
-            )
-            return None
-    except Exception as e:
+        logger.error(
+            "Failed to fetch chart: %s %s", response.status_code, response.text
+        )
+        return None
+    except Exception:
         logger.error("Error fetching chart", exc_info=True)
         return None
 
@@ -375,6 +366,7 @@ async def generate_pdf(doc, elements):
 
     Returns:
         BytesIO: The generated PDF as a buffer.
+
     """
     pdf_buffer = BytesIO()
     await sync_to_async(doc.build)(elements)
@@ -412,6 +404,7 @@ def add_header_footer(canvas_obj, doc):
     Args:
         canvas_obj: The canvas object.
         doc: The document object.
+
     """
     width, height = A4
 
@@ -427,7 +420,7 @@ def add_header_footer(canvas_obj, doc):
             preserveAspectRatio=True,
             mask="auto",
         )
-    except Exception as e:
+    except Exception:
         logger.error("Error loading header image", exc_info=True)
 
     # Header
@@ -448,7 +441,7 @@ def add_header_footer(canvas_obj, doc):
             preserveAspectRatio=True,
             mask="auto",
         )
-    except Exception as e:
+    except Exception:
         logger.error("Error loading header image", exc_info=True)
 
     # Footer
@@ -611,9 +604,7 @@ async def add_section_2_charts_time_series(
                 if i != len(charts) - 1:
                     elements.append(Spacer(1, 5))
             except Exception as e:
-                elements.append(
-                    Paragraph(f"Error fetching chart: {str(e)}", body_style)
-                )
+                elements.append(Paragraph(f"Error fetching chart: {e!s}", body_style))
                 elements.append(Spacer(1, 5))
 
     return elements
@@ -649,7 +640,7 @@ async def generate_report(request):
 
         try:
             state_report_config = report_config_all[geo_code]
-        except KeyError as e:
+        except KeyError:
             return HttpResponse(
                 "Configuration not found for the given state", status=500
             )
@@ -754,7 +745,7 @@ async def generate_report(request):
 
         try:
             table_2_config = state_report_config["SECTION_1"]["TABLE_2"]
-        except KeyError as e:
+        except KeyError:
             return HttpResponse(
                 "Configuration not found for the given state", status=500
             )
@@ -970,7 +961,6 @@ def sort_data_dict_and_return_highest_key(data_dict):
     """
     A simple function to return key corresponding to highest values in a dictionary
     """
-
     if not data_dict:  # Handle empty dictionary
         return None
 
@@ -984,16 +974,15 @@ async def get_cumulative_indicator_value_for_last_three_years(
     """
     A simple function to return cumulative value for last three years for provided indicator and district
 
-    args:
+    Args:
     time_period (int): The year from which 3 years of value is calculated
     indicator (str): The indicator for which cumulative value is to be calculated
     district (str): The district for which cumulative value is to be calculated
 
-    returns:
+    Returns:
     int: The cumulative value for the last three years
 
     """
-
     # create array of three years, current, previous and before previous
     calculation_years = [time_period, (time_period - 1), (time_period - 2)]
 
@@ -1073,7 +1062,7 @@ async def append_insights_section(
             main_insights.append(
                 f"As per {time_period_string}, most at risk districts are {', '.join([item['geography'].name.title() for item in major_indicators_districts_top_3])}. The factors scoring lowest for {factors_scoring_lowest}"
             )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         try:
@@ -1097,7 +1086,7 @@ async def append_insights_section(
             main_insights.append(
                 f"For most at risk district, {major_indicators_districts_top_3[0]['geography'].name.title()}, public contracts totalling to INR {cumulative_total_flood_value_0} have been awarded in past 3 years for flood management related activities and projects. Out of this, INR {cumulative_sdrf_value_0} has been spent on flood related tenders through SDRF."
             )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         try:
@@ -1120,14 +1109,14 @@ async def append_insights_section(
             main_insights.append(
                 f"For {major_indicators_districts_top_3[1]['geography'].name.title()}, public contracts totalling to INR {cumulative_total_flood_value_1} have been awarded in past 3 years for flood management related activities and projects and for {major_indicators_districts_top_3[2]['geography'].name.title()}, public contracts totalling to INR {cumulative_total_flood_value_2} have been awarded."
             )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         try:
             main_insights.append(
                 f"For {major_indicators_districts_top_3[0]['geography'].name.title()}, Risk is high because of {indicator_mapping[sort_data_dict_and_return_highest_key(major_indicators_districts_top_3[0]['indicators'])[1][0]]} and {indicator_mapping[sort_data_dict_and_return_highest_key(major_indicators_districts_top_3[0]['indicators'])[2][0]]} showing need of more targetted intervention to address these."
             )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         try:
@@ -1144,14 +1133,14 @@ async def append_insights_section(
                 if major_indicators_districts_top_3[0]["geography"].name
                 else "Major indicators district name is null"
             )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         try:
             main_insights.append(
                 f"{district_that_received_minimum_amount_flood_tenders.name.title()} needs significant effort on Government Response as least money has been received despite having among the highest Risk score."
             )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         try:
@@ -1183,12 +1172,12 @@ async def append_insights_section(
             ):
                 main_insights.append(
                     f"{district_with_highest_hazard_score.name.title()} needs effort on Hazard risk reduction as "
-                    + f"{area_inundated_pct_for_dist_with_high_hazard} of its area experienced inundation this month."
+                    f"{area_inundated_pct_for_dist_with_high_hazard} of its area experienced inundation this month."
                     if area_inundated_pct_for_dist_with_high_hazard is not None
                     else f"{district_with_highest_hazard_score.name.title()} needs effort on Hazard risk reduction as "
-                    + f"it received {peak_daily_rainfall_for_dist_with_high_hazard}mm of peak daily rainfall this month."
+                    f"it received {peak_daily_rainfall_for_dist_with_high_hazard}mm of peak daily rainfall this month."
                 )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         try:
@@ -1209,7 +1198,7 @@ async def append_insights_section(
             main_insights.append(
                 f"{district_with_highest_exposure.name.title()} needs effort on exposure risk reduction, seeing that Total Population Exposed this month is {total_population_exposed_for_dist_with_highest_exposure}."
             )
-        except Exception as e:
+        except Exception:
             logger.error("Error generating report insight", exc_info=True)
 
         if len(main_insights) > 0:
@@ -1245,16 +1234,15 @@ async def get_indicator_value_for_specified_month(time_period, indicator, distri
     """
     A simple function to return indicator value for specified month for provided indicator and district
 
-    args:
+    Args:
     time_period (int): The month for which value is calculated
     indicator (str): The indicator for which value is to be calculated
     district (str): The district for which value is to be calculated
 
-    returns:
+    Returns:
     int: The value for the specified month
 
     """
-
     data_obj = await sync_to_async(Data.objects.filter)(
         data_period=time_period,
         indicator__is_visible=True,
@@ -1277,15 +1265,15 @@ async def get_district_that_received_min_max_given_indicator(
     """
     A simple function to return district that received minimum value for the given indicator and time period
 
-    args:
+    Args:
     district_list (list): The list of districts for which value is to be calculated
     indicator (str): The indicator for which value is to be calculated
     time_period (int): The month for which value is calculated
 
-    returns:
+    Returns:
     dict: The geography object for the specified conditions
-    """
 
+    """
     get_district_data_for_given_indicator = await sync_to_async(Data.objects.filter)(
         data_period=time_period,
         indicator__slug=indicator,
@@ -1311,8 +1299,7 @@ async def get_district_that_received_min_max_given_indicator(
 
     if min_max == "min":
         return results[0].geography
-    else:
-        return results[-1].geography
+    return results[-1].geography
 
 
 def append_annexure_section(elements):
@@ -1362,8 +1349,7 @@ async def get_topsis_score_for_given_values(time_period, state_code):
     data_list = await sync_to_async(list)(data_list)
     if len(data_list) > 0:
         return data_list[0].value
-    else:
-        return "0"
+    return "0"
 
 
 async def add_sdrf_section_for_top_districts(elements, time_period, geo_filter):
