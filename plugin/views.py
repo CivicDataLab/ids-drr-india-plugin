@@ -367,7 +367,8 @@ async def get_latest_time_period():
     )
 
     if latest:
-        return datetime.datetime.strptime(latest, "%Y_%m")
+        year, month = map(int, latest.split("_"))
+        return datetime.date(year, month, 1)
     return None
 
 
@@ -586,7 +587,8 @@ async def generate_report(request):
 
         geo_code = request.GET.get("geo_code", "18")
         time_period = request.GET.get("time_period", settings.DEFAULT_TIME_PERIOD)
-        time_period_parsed = datetime.datetime.strptime(time_period, "%Y_%m")
+        year, month = map(int, time_period.split("_"))
+        time_period_parsed = datetime.date(year, month, 1)
         time_period_string = time_period_parsed.strftime("%B %Y")
 
         try:
@@ -1309,7 +1311,8 @@ async def add_sdrf_section_for_top_districts(elements, time_period, geo_filter):
 
 
 def identify_and_get_prev_financial_years(time_period, number_of_years=3):
-    time_period_parsed = datetime.datetime.strptime(time_period, "%Y_%m")
+    year, month = map(int, time_period.split("_"))
+    time_period_parsed = datetime.date(year, month, 1)
 
     # India's financial year starts in April, so Jan-Mar belongs to the previous FY.
     if time_period_parsed.month <= calendar.MARCH:
