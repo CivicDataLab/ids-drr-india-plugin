@@ -223,7 +223,7 @@ async def group_by_geography(data_list, expected_indicators=()):
         grouped_data[geography]["indicators"][indicator.slug] = value
 
     grouped_data = list(grouped_data.values())
-    # find the missing indicators in each grouped_data in comparison with expected indicators and assign NA to the indicators
+    # Fill in any indicators that are expected but missing from this group with "NA".
     for data_group in grouped_data:
         missing_indicators = set(expected_indicators) - set(
             data_group["indicators"].keys()
@@ -381,7 +381,7 @@ def get_last_three_months(date_obj):
 
 
 class CustomDocTemplate(SimpleDocTemplate):
-    """Custom SimpleDocTemplate that draws a per-page header and footer carrying state and time-period."""
+    """SimpleDocTemplate with per-page header and footer for a state and time period."""
 
     def __init__(self, *args, state_name="", time_period_string="", **kwargs):
         super().__init__(*args, **kwargs)
@@ -578,7 +578,8 @@ async def generate_report(request):
         report_config_all = await sync_to_async(load_reports)()
         if not report_config_all:
             logger.error(
-                "No [reports.states] in the configuration file and no report_config.json in %s",
+                "No [reports.states] in the configuration file and no "
+                "report_config.json in %s",
                 settings.BASE_DIR,
             )
             return HttpResponse(
@@ -631,7 +632,7 @@ async def generate_report(request):
             "5.0": Paragraph("Very High", bold_table_body_style),
         }
 
-        # Create a time period array with 2 months prior to current selected month along with the current month
+        # Current month and the two preceding months, as YYYY_MM strings.
         time_period_prev_months_array = [
             (time_period_parsed - datetime.timedelta(days=60)).strftime("%Y_%m"),
             (time_period_parsed - datetime.timedelta(days=30)).strftime("%Y_%m"),
@@ -660,13 +661,15 @@ async def generate_report(request):
 
             if len(top_vulnerable_districts_data_obj) < TOP_DISTRICT_COUNT:
                 return HttpResponse(
-                    "Error generating report. Vulnerable Districts not found for the given state",
+                    "Error generating report. Vulnerable Districts not found "
+                    "for the given state",
                     status=500,
                 )
 
             elements.append(
                 Paragraph(
-                    f"As of {time_period_string}, the following 5 districts in {state.name} faced highest risk - ",
+                    f"As of {time_period_string}, the following 5 districts in "
+                    f"{state.name} faced highest risk - ",
                     body_style,
                 )
             )
@@ -677,12 +680,10 @@ async def generate_report(request):
                         ListItem(Paragraph(data.geography.name, body_style))
                         for data in top_vulnerable_districts_data_obj
                     ],
-                    bulletType="1",  # Use '1' for numbered list
-                    start="1",  # Start numbering from 1
-                    # Overall indentation of the list (adjust as needed)
+                    bulletType="1",  # numbered list
+                    start="1",
                     leftIndent=12,
-                    # Indent the numbers by 18 points (adjust as needed)
-                    bulletFontSize=10,  # Set the font size of the numbers to match the text
+                    bulletFontSize=10,
                     bulletColor=colors.black,
                     bulletFormat="%s.",
                 )
@@ -690,7 +691,8 @@ async def generate_report(request):
 
             elements.append(
                 Paragraph(
-                    "Note: The Flood Risk is calculated as a function of Hazard, Exposure, Vulnerability and Government Response.",
+                    "Note: The Flood Risk is calculated as a function of Hazard, "
+                    "Exposure, Vulnerability and Government Response.",
                     body_style_italic,
                 )
             )
@@ -812,10 +814,6 @@ async def generate_report(request):
 
         if CHART_API_BASE_URL and resource_id and section_2_config.get("CHARTS"):
             elements.append(Paragraph(section_2_config["title"], heading_1_style))
-
-            # time_period_str = ', '.join([datetime.datetime.strptime(
-            #     period, "%Y_%m").strftime("%B %Y") for period in time_period_prev_months_array])
-
             elements.append(Paragraph(section_2_config["sub_title"], heading_2_style))
 
             elements = await add_section_2_charts_time_series(
@@ -988,7 +986,7 @@ async def append_insights_section(
     if len(major_indicators_districts) >= TOP_DISTRICT_COUNT:
         major_indicators_districts_top_3 = major_indicators_districts[:-2]
 
-        # Get district that received minimum amount from flood tenders for given time period
+        # District receiving the smallest flood-tender amount for this time period.
         district_that_received_minimum_amount_flood_tenders = (
             await get_district_that_received_min_max_given_indicator(
                 major_indicators_districts,
@@ -1003,13 +1001,18 @@ async def append_insights_section(
 
         try:
             factors_scoring_lowest = ", ".join(
-                [
-                    f"{item['geography'].name.title()} is {indicator_mapping[sort_data_dict_and_return_highest_key(item['indicators'])[1][0]]}"
-                    for item in major_indicators_districts_top_3
-                ]
+                f"{item['geography'].name.title()} is "
+                f"{indicator_mapping[sort_data_dict_and_return_highest_key(item['indicators'])[1][0]]}"
+                for item in major_indicators_districts_top_3
+            )
+            top_district_names = ", ".join(
+                item["geography"].name.title()
+                for item in major_indicators_districts_top_3
             )
             main_insights.append(
-                f"As per {time_period_string}, most at risk districts are {', '.join([item['geography'].name.title() for item in major_indicators_districts_top_3])}. The factors scoring lowest for {factors_scoring_lowest}"
+                f"As per {time_period_string}, most at risk districts are "
+                f"{top_district_names}. The factors scoring lowest for "
+                f"{factors_scoring_lowest}"
             )
         except Exception:
             logger.exception("Error generating report insight")
@@ -1032,8 +1035,15 @@ async def append_insights_section(
                 )
             )
 
+            top_district = major_indicators_districts_top_3[0]["geography"]
+            top_district_name = top_district.name.title()
             main_insights.append(
-                f"For most at risk district, {major_indicators_districts_top_3[0]['geography'].name.title()}, public contracts totalling to INR {cumulative_total_flood_value_0} have been awarded in past 3 years for flood management related activities and projects. Out of this, INR {cumulative_sdrf_value_0} has been spent on flood related tenders through SDRF."
+                f"For most at risk district, {top_district_name}, public "
+                f"contracts totalling to INR {cumulative_total_flood_value_0} "
+                f"have been awarded in past 3 years for flood management "
+                f"related activities and projects. Out of this, INR "
+                f"{cumulative_sdrf_value_0} has been spent on flood related "
+                f"tenders through SDRF."
             )
         except Exception:
             logger.exception("Error generating report insight")
@@ -1055,15 +1065,32 @@ async def append_insights_section(
                     major_indicators_districts_top_3[2]["geography"].id,
                 )
             )
+            district_1 = major_indicators_districts_top_3[1]["geography"]
+            district_2 = major_indicators_districts_top_3[2]["geography"]
+            district_1_name = district_1.name.title()
+            district_2_name = district_2.name.title()
             main_insights.append(
-                f"For {major_indicators_districts_top_3[1]['geography'].name.title()}, public contracts totalling to INR {cumulative_total_flood_value_1} have been awarded in past 3 years for flood management related activities and projects and for {major_indicators_districts_top_3[2]['geography'].name.title()}, public contracts totalling to INR {cumulative_total_flood_value_2} have been awarded."
+                f"For {district_1_name}, public contracts totalling to INR "
+                f"{cumulative_total_flood_value_1} have been awarded in past 3 years "
+                f"for flood management related activities and projects and for "
+                f"{district_2_name}, public contracts totalling to INR "
+                f"{cumulative_total_flood_value_2} have been awarded."
             )
         except Exception:
             logger.exception("Error generating report insight")
 
         try:
+            top_district = major_indicators_districts_top_3[0]
+            top_district_name = top_district["geography"].name.title()
+            sorted_indicators = sort_data_dict_and_return_highest_key(
+                top_district["indicators"]
+            )
+            top_factor_1 = indicator_mapping[sorted_indicators[1][0]]
+            top_factor_2 = indicator_mapping[sorted_indicators[2][0]]
             main_insights.append(
-                f"For {major_indicators_districts_top_3[0]['geography'].name.title()}, Risk is high because of {indicator_mapping[sort_data_dict_and_return_highest_key(major_indicators_districts_top_3[0]['indicators'])[1][0]]} and {indicator_mapping[sort_data_dict_and_return_highest_key(major_indicators_districts_top_3[0]['indicators'])[2][0]]} showing need of more targetted intervention to address these."
+                f"For {top_district_name}, Risk is high because of {top_factor_1} "
+                f"and {top_factor_2} showing need of more targetted intervention "
+                f"to address these."
             )
         except Exception:
             logger.exception("Error generating report insight")
@@ -1077,17 +1104,25 @@ async def append_insights_section(
                     major_indicators_districts_top_3[0]["geography"].id,
                 )
             )
+            top_district_name = major_indicators_districts_top_3[0]["geography"].name
             main_insights.append(
-                f"{major_indicators_districts_top_3[0]['geography'].name.title()} has received {cumulative_tender_value} amount in terms of flood related tenders in past 3 years despite having among the highest Risk score"
-                if major_indicators_districts_top_3[0]["geography"].name
+                f"{top_district_name.title()} has received {cumulative_tender_value} "
+                f"amount in terms of flood related tenders in past 3 years despite "
+                f"having among the highest Risk score"
+                if top_district_name
                 else "Major indicators district name is null"
             )
         except Exception:
             logger.exception("Error generating report insight")
 
         try:
+            min_tender_district = (
+                district_that_received_minimum_amount_flood_tenders.name.title()
+            )
             main_insights.append(
-                f"{district_that_received_minimum_amount_flood_tenders.name.title()} needs significant effort on Government Response as least money has been received despite having among the highest Risk score."
+                f"{min_tender_district} needs significant effort on Government "
+                f"Response as least money has been received despite having among "
+                f"the highest Risk score."
             )
         except Exception:
             logger.exception("Error generating report insight")
@@ -1119,13 +1154,22 @@ async def append_insights_section(
                 area_inundated_pct_for_dist_with_high_hazard is not None
                 or peak_daily_rainfall_for_dist_with_high_hazard is not None
             ):
-                main_insights.append(
-                    f"{district_with_highest_hazard_score.name.title()} needs effort on Hazard risk reduction as "
-                    f"{area_inundated_pct_for_dist_with_high_hazard} of its area experienced inundation this month."
-                    if area_inundated_pct_for_dist_with_high_hazard is not None
-                    else f"{district_with_highest_hazard_score.name.title()} needs effort on Hazard risk reduction as "
-                    f"it received {peak_daily_rainfall_for_dist_with_high_hazard}mm of peak daily rainfall this month."
+                high_hazard_district = district_with_highest_hazard_score.name.title()
+                prefix = (
+                    f"{high_hazard_district} needs effort on Hazard risk "
+                    f"reduction as "
                 )
+                if area_inundated_pct_for_dist_with_high_hazard is not None:
+                    main_insights.append(
+                        f"{prefix}{area_inundated_pct_for_dist_with_high_hazard} "
+                        f"of its area experienced inundation this month."
+                    )
+                else:
+                    main_insights.append(
+                        f"{prefix}it received "
+                        f"{peak_daily_rainfall_for_dist_with_high_hazard}mm of "
+                        f"peak daily rainfall this month."
+                    )
         except Exception:
             logger.exception("Error generating report insight")
 
@@ -1144,8 +1188,11 @@ async def append_insights_section(
                     district_with_highest_exposure.id,
                 )
             )
+            high_exposure_district = district_with_highest_exposure.name.title()
             main_insights.append(
-                f"{district_with_highest_exposure.name.title()} needs effort on exposure risk reduction, seeing that Total Population Exposed this month is {total_population_exposed_for_dist_with_highest_exposure}."
+                f"{high_exposure_district} needs effort on exposure risk "
+                f"reduction, seeing that Total Population Exposed this month is "
+                f"{total_population_exposed_for_dist_with_highest_exposure}."
             )
         except Exception:
             logger.exception("Error generating report insight")
@@ -1158,12 +1205,10 @@ async def append_insights_section(
             elements.append(
                 ListFlowable(
                     prepare_array,
-                    bulletType="1",  # Use '1' for numbered list
-                    start="1",  # Start numbering from 1
-                    # Overall indentation of the list (adjust as needed)
+                    bulletType="1",  # numbered list
+                    start="1",
                     leftIndent=12,
-                    # Indent the numbers by 18 points (adjust as needed)
-                    bulletFontSize=10,  # Set the font size of the numbers to match the text
+                    bulletFontSize=10,
                     bulletColor=colors.black,
                     bulletFormat="%s.",
                 )
@@ -1212,13 +1257,13 @@ async def get_district_that_received_min_max_given_indicator(
     district_list, indicator, time_period, min_max="min"
 ):
     """
-    Return the district that received the minimum or maximum value for the given indicator and time period.
+    Return the min or max district for the given indicator and time period.
 
     Args:
     district_list (list): The list of districts for which value is to be calculated
     indicator (str): The indicator for which value is to be calculated
     time_period (int): The month for which value is calculated
-    min_max (str): "min" to return the district with the lowest value, "max" for the highest
+    min_max (str): "min" to return the lowest-value district, "max" for the highest
 
     Returns:
     dict: The geography object for the specified conditions
@@ -1256,10 +1301,22 @@ def append_annexure_section(elements):
     elements.append(Paragraph("Annexure II: Definitions", heading_2_style))
 
     list_of_defs = [
-        "<b>Hazard</b> represents the extent and intensity of flooding due to factors like Rainfall & Land Characteristics",
-        "<b>Exposure</b> represents the total population inhabiting the place: Population & Total number of Households",
-        "<b>Vulnerability</b> represents how the losses & damages compare against the socioeconomic indicators",
-        "<b>Government Response</b> represents the public investments through the tenders made for flood disaster management",
+        (
+            "<b>Hazard</b> represents the extent and intensity of flooding due "
+            "to factors like Rainfall & Land Characteristics"
+        ),
+        (
+            "<b>Exposure</b> represents the total population inhabiting the "
+            "place: Population & Total number of Households"
+        ),
+        (
+            "<b>Vulnerability</b> represents how the losses & damages compare "
+            "against the socioeconomic indicators"
+        ),
+        (
+            "<b>Government Response</b> represents the public investments "
+            "through the tenders made for flood disaster management"
+        ),
     ]
 
     elements.append(
@@ -1333,11 +1390,21 @@ def identify_and_get_prev_financial_years(time_period, number_of_years=3):
 def append_data_sources_section(elements):
     elements.append(Paragraph("Data Sources", heading_2_style))
 
+    bhuvan_url = "https://bhuvan-app1.nrsc.gov.in/disaster/disaster.php?id=flood"
+    worldpop_url = "https://hub.worldpop.org/project/categories?id=3"
+    drims_url = "https://www.asdma.gov.in/reports.html"
+    tenders_url = "https://assamtenders.gov.in/nicgep/app?page=WebTenderStatusLists&service=page"
     list_of_sources = [
-        "Source for Inundation Data: <u><a href='https://bhuvan-app1.nrsc.gov.in/disaster/disaster.php?id=flood'>Bhuvan</a></u>",
-        "Source for population and demographic data: <u><a href='https://hub.worldpop.org/project/categories?id=3'>UN WorldPop</a></u>",
-        "Source for Losses and Damages: <u><a href='https://www.asdma.gov.in/reports.html'>ASDMA DRIMS</a></u>",
-        "Source for tender data: <u><a href='https://assamtenders.gov.in/nicgep/app?page=WebTenderStatusLists&service=page'>Assam GEPNiC e-tenders platform</a></u>",
+        f"Source for Inundation Data: <u><a href='{bhuvan_url}'>Bhuvan</a></u>",
+        (
+            f"Source for population and demographic data: "
+            f"<u><a href='{worldpop_url}'>UN WorldPop</a></u>"
+        ),
+        f"Source for Losses and Damages: <u><a href='{drims_url}'>ASDMA DRIMS</a></u>",
+        (
+            f"Source for tender data: <u><a href='{tenders_url}'>"
+            f"Assam GEPNiC e-tenders platform</a></u>"
+        ),
     ]
     elements.append(
         ListFlowable(
