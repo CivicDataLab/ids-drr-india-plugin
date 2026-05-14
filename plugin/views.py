@@ -1,6 +1,5 @@
 import datetime
 import logging
-import os
 from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
@@ -158,7 +157,7 @@ def set_page_level_state_and_time_period(state, time_period):
 
 
 async def fetch_chart(client, chart_payload, resource_id):
-    output_path = str(ASSETS_DIR / "charts" / Faker().file_name(extension="png"))
+    output_path = ASSETS_DIR / "charts" / Faker().file_name(extension="png")
     try:
         timeout = httpx.Timeout(10.0, read=None)
         response = await client.post(
@@ -166,17 +165,17 @@ async def fetch_chart(client, chart_payload, resource_id):
             json=chart_payload,
             timeout=timeout,
         )
-        if response.status_code == 200:
-            with open(output_path, "wb") as f:
-                f.write(response.content)
-            return output_path
-        logger.error(
-            "Failed to fetch chart: %s %s", response.status_code, response.text
-        )
-        return None
+        if response.status_code != 200:
+            logger.error(
+                "Failed to fetch chart: %s %s", response.status_code, response.text
+            )
+            return None
+        await sync_to_async(output_path.write_bytes)(response.content)
     except Exception:
         logger.error("Error fetching chart", exc_info=True)
         return None
+    else:
+        return str(output_path)
 
 
 # @lru_cache
@@ -374,7 +373,7 @@ async def generate_pdf(doc, elements):
     return pdf_buffer
 
 
-async def get_latest_time_period(geo_code=None):
+async def get_latest_time_period():
     latest = (
         await Data.objects.values_list("data_period", flat=True)
         .annotate(custom_ordering=F("data_period"))
@@ -607,11 +606,8 @@ async def add_section_2_charts_time_series(
 
 async def cleanup_temp_files():
     """Cleanup temporary files generated during the report generation process."""
-    import glob
-
-    chart_files = glob.glob(str(ASSETS_DIR / "charts" / "*.png"))
-    for file in chart_files:
-        os.remove(file)
+    for file in (ASSETS_DIR / "charts").glob("*.png"):
+        file.unlink()
 
 
 async def generate_report(request):
@@ -753,7 +749,7 @@ async def generate_report(request):
             # Factor wise risk assessment
             elements.append(Paragraph("Factor wise risk assessment", heading_3_style))
 
-            majorIndicatorsData = await get_major_indicators_data(
+            major_indicators_data = await get_major_indicators_data(
                 time_period, state.code
             )
 
@@ -770,7 +766,7 @@ async def generate_report(request):
                     ]
                 ]
             ]
-            for data in majorIndicatorsData:
+            for data in major_indicators_data:
                 district_table_data.append(
                     [
                         Paragraph(data["geography"].name, table_body_style),
@@ -816,9 +812,7 @@ async def generate_report(request):
             values = [
                 Paragraph(
                     (
-                        (lambda v: str(int(v)) if v not in ["NA", None] else "NA")(
-                            data["indicators"].get(indicator)
-                        )
+                        str(int(data["indicators"].get(indicator)))
                         if isinstance(
                             data["indicators"].get(indicator), (int, float, str)
                         )

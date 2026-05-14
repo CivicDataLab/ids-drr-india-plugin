@@ -84,5 +84,5 @@ def load_reports():
     try:
         ReportConfig.model_validate(data)
     except ValidationError as exc:
-        raise ImproperlyConfigured(f"Invalid {path}:\n{exc}") from exc
+        raise ImproperlyConfigured(f"Invalid {path}:\n{exc}") from exc  # noqa: TRY003
     return data
