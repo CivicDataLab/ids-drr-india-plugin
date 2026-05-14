@@ -43,7 +43,7 @@ chart_colors = ["#89672A", "#3B8F44", "#C41C8D", "#FB4E93", "#7B4DD9"]
 def register_font(
     font_name, font_url_bold=None, font_url_regular=None, font_url_italic=None
 ):
-    """Downloads and registers a Font with ReportLab, defaults to Helvetica if fails."""
+    """Download and register a Font with ReportLab, defaults to Helvetica on failure."""
     if font_url_bold or font_url_regular or font_url_italic:
         if font_url_bold:
             pdfmetrics.registerFont(TTFont(f"{font_name}-Bold", font_url_bold))
@@ -460,9 +460,7 @@ def add_header_footer(canvas_obj, doc):
 
 
 class CustomDocTemplate(SimpleDocTemplate):
-    """
-    Custom SimpleDocTemplate to add header and footer.
-    """
+    """Custom SimpleDocTemplate to add header and footer."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -474,9 +472,7 @@ class CustomDocTemplate(SimpleDocTemplate):
         onLaterPages=add_header_footer,
         canvasmaker=canvas.Canvas,
     ):
-        """
-        Overridden build method to add header and footer.
-        """
+        """Overridden build method to add header and footer."""
         # self.page_count = len(
         #     flowables)  # Total page count for dynamic numbering
 
@@ -611,9 +607,7 @@ async def add_section_2_charts_time_series(
 
 
 async def cleanup_temp_files():
-    """
-    Cleanup temporary files generated during the report generation process.
-    """
+    """Cleanup temporary files generated during the report generation process."""
     import glob
 
     chart_files = glob.glob(str(ASSETS_DIR / "charts" / "*.png"))
@@ -958,9 +952,7 @@ async def get_table(
 
 
 def sort_data_dict_and_return_highest_key(data_dict):
-    """
-    A simple function to return key corresponding to highest values in a dictionary
-    """
+    """Return key corresponding to highest values in a dictionary."""
     if not data_dict:  # Handle empty dictionary
         return None
 
@@ -972,7 +964,7 @@ async def get_cumulative_indicator_value_for_last_three_years(
     time_period, indicator, district
 ):
     """
-    A simple function to return cumulative value for last three years for provided indicator and district
+    Return cumulative value for last three years for provided indicator and district.
 
     Args:
     time_period (int): The year from which 3 years of value is calculated
@@ -1232,7 +1224,7 @@ async def append_insights_section(
 
 async def get_indicator_value_for_specified_month(time_period, indicator, district):
     """
-    A simple function to return indicator value for specified month for provided indicator and district
+    Return indicator value for specified month for provided indicator and district.
 
     Args:
     time_period (int): The month for which value is calculated
@@ -1263,12 +1255,13 @@ async def get_district_that_received_min_max_given_indicator(
     district_list, indicator, time_period, min_max="min"
 ):
     """
-    A simple function to return district that received minimum value for the given indicator and time period
+    Return the district that received the minimum or maximum value for the given indicator and time period.
 
     Args:
     district_list (list): The list of districts for which value is to be calculated
     indicator (str): The indicator for which value is to be calculated
     time_period (int): The month for which value is calculated
+    min_max (str): "min" to return the district with the lowest value, "max" for the highest
 
     Returns:
     dict: The geography object for the specified conditions
@@ -1330,8 +1323,6 @@ def append_annexure_section(elements):
 
 
 async def get_topsis_score_for_given_values(time_period, state_code):
-    """ """
-
     data_obj = await sync_to_async(Data.objects.filter)(
         indicator__slug="topsis-score",
         data_period=time_period,
