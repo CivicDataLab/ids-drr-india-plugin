@@ -265,16 +265,12 @@ async def get_major_indicators_data(time_period, geo_filter):
     data_list = await sync_to_async(list)(data_obj)
 
     result = await group_by_geography(data_list)
-    sorted_result = []
-    for dist in top_districts:
-        for item in result:
-            if item["geography"].id == dist.id:
-                sorted_result.append(item)
-    # Return top 5 if` overall flood risk districts are <5 else return all districts with 5 overall score
-    # high_risk_districts = [
-    #     district for district in result if district['indicators']["risk-score"] >= 5]
-
-    return sorted_result
+    return [
+        item
+        for dist in top_districts
+        for item in result
+        if item["geography"].id == dist.id
+    ]
 
 
 def generate_financial_year_months(time_period):
@@ -289,14 +285,12 @@ def generate_financial_year_months(time_period):
         start_year = year
         end_year = year + 1
 
-    # Generate months for the financial year
-    financial_year_months = []
-    for m in range(4, 13):  # From April (4) to December (12)
-        financial_year_months.append(f"{start_year}_{m:02d}")
-    for m in range(1, 4):  # From January (1) to March (3) of the next year
-        financial_year_months.append(f"{end_year}_{m:02d}")
-
-    return financial_year_months
+    # Generate months for the financial year (April-December of start_year,
+    # then January-March of end_year).
+    return [
+        *(f"{start_year}_{m:02d}" for m in range(4, 13)),
+        *(f"{end_year}_{m:02d}" for m in range(1, 4)),
+    ]
 
 
 async def get_cumulative_value_for_financial_year(time_period, indicator, district):
@@ -346,13 +340,9 @@ async def get_district_highlights(time_period, geo_filter, table_indicators):
                 time_period, indicator, district["geography"]
             )
 
-    sorted_result = []
-    for dist in districts:
-        for item in data:
-            if item["geography"].id == dist.id:
-                sorted_result.append(item)
-
-    return sorted_result
+    return [
+        item for dist in districts for item in data if item["geography"].id == dist.id
+    ]
 
 
 async def generate_pdf(doc, elements):
@@ -491,17 +481,16 @@ async def add_section_3_charts(elements, time_period, geo_filter, charts, resour
     districts = await get_top_vulnerable_districts(time_period, geo_filter)
 
     districts: list[Geography] = [district.geography for district in districts]
-    y_axis_columns = []
     tender_chart_colors = chart_colors.copy()
-    for district in districts:
-        y_axis_columns.append(
-            {
-                "field_name": f"{district.code}",
-                "label": f"{district.name}",
-                "color": tender_chart_colors.pop(0),
-                "aggregate_type": "SUM",
-            }
-        )
+    y_axis_columns = [
+        {
+            "field_name": f"{district.code}",
+            "label": f"{district.name}",
+            "color": tender_chart_colors.pop(0),
+            "aggregate_type": "SUM",
+        }
+        for district in districts
+    ]
 
     async with httpx.AsyncClient() as client:
         for i, chart_config in enumerate(charts):
@@ -556,16 +545,15 @@ async def add_section_2_charts_time_series(
     districts = await get_top_vulnerable_districts(time_period, geo_filter)
 
     districts: list[Geography] = [district.geography for district in districts]
-    y_axis_columns = []
     lnd_chart_colors = chart_colors.copy()
-    for district in districts:
-        y_axis_columns.append(
-            {
-                "field_name": f"{district.code}",
-                "label": f"{district.name}",
-                "color": lnd_chart_colors.pop(0),
-            }
-        )
+    y_axis_columns = [
+        {
+            "field_name": f"{district.code}",
+            "label": f"{district.name}",
+            "color": lnd_chart_colors.pop(0),
+        }
+        for district in districts
+    ]
 
     async with httpx.AsyncClient() as client:
         for i, chart_config in enumerate(charts):
@@ -766,19 +754,17 @@ async def generate_report(request):
                     ]
                 ]
             ]
-            for data in major_indicators_data:
-                district_table_data.append(
-                    [
-                        Paragraph(data["geography"].name, table_body_style),
-                        bold_risk_mapping_text[str(data["indicators"]["risk-score"])],
-                        risk_mapping_text[str(data["indicators"]["flood-hazard"])],
-                        risk_mapping_text[str(data["indicators"]["exposure"])],
-                        risk_mapping_text[str(data["indicators"]["vulnerability"])],
-                        risk_mapping_text[
-                            str(data["indicators"]["government-response"])
-                        ],
-                    ]
-                )
+            district_table_data.extend(
+                [
+                    Paragraph(data["geography"].name, table_body_style),
+                    bold_risk_mapping_text[str(data["indicators"]["risk-score"])],
+                    risk_mapping_text[str(data["indicators"]["flood-hazard"])],
+                    risk_mapping_text[str(data["indicators"]["exposure"])],
+                    risk_mapping_text[str(data["indicators"]["vulnerability"])],
+                    risk_mapping_text[str(data["indicators"]["government-response"])],
+                ]
+                for data in major_indicators_data
+            )
 
             district_table = await get_table(
                 district_table_data, [100, 80, 80, 80, 80, 80]
@@ -801,11 +787,13 @@ async def generate_report(request):
             time_period, state.code, table_2_config["columns"]
         )
 
-        b = []
-        for header_value in ["District Name"] + [
-            col["label"] for col in table_2_config["columns"]
-        ]:
-            b.append(Paragraph(header_value, table_header_style))
+        b = [
+            Paragraph(header_value, table_header_style)
+            for header_value in [
+                "District Name",
+                *(col["label"] for col in table_2_config["columns"]),
+            ]
+        ]
         district_table_data = [b]
 
         for data in data_obj:
@@ -1337,22 +1325,11 @@ async def get_topsis_score_for_given_values(time_period, state_code):
 
 async def add_sdrf_section_for_top_districts(elements, time_period, geo_filter):
     districts = await get_top_vulnerable_districts(time_period, geo_filter)
-
     districts: list[Geography] = [district.geography for district in districts]
 
-    y_axis_columns = []
-    for district in districts:
-        y_axis_columns.append(
-            {
-                "field_name": f"{district.code}",
-                "label": f"{district.name}",
-                "color": f"{Faker().color()}",
-            }
-        )
+    # The intended chart fetch was commented out (see git history). y_axis_columns
+    # was built per-district here and consumed by the commented fetch_chart call.
 
-        # chart = await fetch_chart(client, chart_payload, "a165cb92-8c92-49d5-83bb-d8a875c61a57")
-
-        # elements.append(Image(chart, width=500, height=300))
     return elements
 
 
