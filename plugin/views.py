@@ -499,7 +499,7 @@ async def add_section_3_charts(elements, time_period, geo_filter, charts, resour
                 if i != len(charts) - 1:
                     elements.append(Spacer(1, 5))
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 elements.append(
                     Paragraph("Error fetching chart: " + str(e), body_style)
                 )
@@ -558,7 +558,7 @@ async def add_section_2_charts_time_series(
                 # Add Spacer only if it's not the last chart
                 if i != len(charts) - 1:
                     elements.append(Spacer(1, 5))
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 elements.append(Paragraph(f"Error fetching chart: {e!s}", body_style))
                 elements.append(Spacer(1, 5))
 
@@ -696,7 +696,7 @@ async def generate_report(request):
             )
 
             elements.append(Spacer(1, 20))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             elements.append(Paragraph(f"Error fetching district data: {e}", body_style))
 
         try:
@@ -750,7 +750,7 @@ async def generate_report(request):
             )
             elements.append(district_table)
             elements.append(Spacer(1, 10))
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             elements.append(
                 Paragraph(f"Error fetching major indicators data: {e}", body_style)
             )
