@@ -129,8 +129,6 @@ table_header_style = ParagraphStyle(
     fontName="NotoSans-Bold" if font_registered else "Helvetica-Bold",
     fontSize=8,
     alignment=1,
-    # leading=20,
-    # spaceAfter=10,
 )
 
 table_body_style = ParagraphStyle(
@@ -801,9 +799,6 @@ async def generate_report(request):
             district_table_data, [70] + [60] * len(table_2_config["columns"])
         )
         elements.append(district_table)
-        # elements.append(Spacer(1, 5))
-
-        # add page break
         elements.append(PageBreak())
 
         # --------------------------------------------------------
