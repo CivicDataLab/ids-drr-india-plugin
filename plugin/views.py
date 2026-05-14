@@ -456,23 +456,15 @@ class CustomDocTemplate(SimpleDocTemplate):
     def build(
         self,
         flowables,
-        onFirstPage=add_header_footer,
-        onLaterPages=add_header_footer,
+        on_first_page=add_header_footer,
+        on_later_pages=add_header_footer,
         canvasmaker=canvas.Canvas,
     ):
         """Overridden build method to add header and footer."""
-        # self.page_count = len(
-        #     flowables)  # Total page count for dynamic numbering
-
-        # Below also didn't work
-        # Track page count using afterPage hook
-        # def onLaterPagesWithCount(canvas_obj, doc):
-        #     self.page_count += 1
-        #     onLaterPages(canvas_obj, doc)
         super().build(
             flowables,
-            onFirstPage=onFirstPage,
-            onLaterPages=onLaterPages,
+            onFirstPage=on_first_page,
+            onLaterPages=on_later_pages,
             canvasmaker=canvasmaker,
         )
 
@@ -906,28 +898,26 @@ async def generate_report(request):
     return HttpResponse("Invalid HTTP method", status=405)
 
 
-async def get_table(
-    table_data,
-    colWidths=None,
-    table_style=TableStyle(
-        [
-            ("BACKGROUND", (0, 0), (-1, 0), HexColor(0xDBF9E3)),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-            ("VALIGN", (0, 0), (-1, 0), "MIDDLE"),
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            (
-                "FONTNAME",
-                (0, 0),
-                (-1, 0),
-                "NotoSans-Bold" if font_registered else "Helvetica-Bold",
-            ),
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-            ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ]
-    ),
-):
-    table_view = Table(table_data, colWidths)
+default_table_style = TableStyle(
+    [
+        ("BACKGROUND", (0, 0), (-1, 0), HexColor(0xDBF9E3)),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+        ("VALIGN", (0, 0), (-1, 0), "MIDDLE"),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        (
+            "FONTNAME",
+            (0, 0),
+            (-1, 0),
+            "NotoSans-Bold" if font_registered else "Helvetica-Bold",
+        ),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+    ]
+)
 
+
+async def get_table(table_data, col_widths=None, table_style=default_table_style):
+    table_view = Table(table_data, col_widths)
     table_view.setStyle(table_style)
     return table_view
 
