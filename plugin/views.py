@@ -179,7 +179,9 @@ async def fetch_chart(client, chart_payload, resource_id):
                 f.write(response.content)
             return output_path
         else:
-            logger.error("Failed to fetch chart: %s %s", response.status_code, response.text)
+            logger.error(
+                "Failed to fetch chart: %s %s", response.status_code, response.text
+            )
             return None
     except Exception as e:
         logger.error("Error fetching chart", exc_info=True)
@@ -323,7 +325,6 @@ async def get_cumulative_value_for_financial_year(time_period, indicator, distri
 
 
 async def get_district_highlights(time_period, geo_filter, table_indicators):
-
     districts = await get_top_vulnerable_districts(time_period, geo_filter)
 
     districts = [district.geography for district in districts]
@@ -349,10 +350,10 @@ async def get_district_highlights(time_period, geo_filter, table_indicators):
     ]
     for district in data:
         for indicator in cumulative_indicators:
-            district["indicators"][indicator] = (
-                await get_cumulative_value_for_financial_year(
-                        time_period, indicator, district["geography"]
-                )
+            district["indicators"][
+                indicator
+            ] = await get_cumulative_value_for_financial_year(
+                time_period, indicator, district["geography"]
             )
 
     sorted_result = []
