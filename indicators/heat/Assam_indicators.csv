@@ -1,0 +1,10 @@
+indicatorSlug,indicatorTitle,indicatorDescription,indicatorCategory,parent,unit,datasource,dataSourceLink,IDS_dataSpace,visible_on_platform
+heat-risk-score,Overall Heat Risk,Composite heat-risk score as a function of hazard exposure and vulnerability,Overall Heat Risk,,Score,MODEL,,,y
+heat-hazard,Heat Hazard,Heat hazard component of the overall heat risk,Hazard,Overall Heat Risk,Score,MODEL,,,y
+land-surface-temperature,Land Surface Temperature,Mean land surface temperature in the region,Hazard,Heat Hazard,°C,MODIS,,,y
+air-temperature,Air Temperature,Mean near-surface air temperature in the region,Hazard,Heat Hazard,°C,IMD,,,y
+heat-index,Heat Index,Apparent temperature combining heat and humidity,Hazard,Heat Hazard,Index,MODEL,,,y
+relative-humidity,Relative Humidity,Mean relative humidity in the region,Hazard,Heat Hazard,%,IMD,,,y
+heat-exposure,Heat Exposure,Heat exposure component of the overall heat risk,Exposure,Overall Heat Risk,Score,MODEL,,,y
+population-exposed,Population Exposed,Total population exposed to heat stress,Exposure,Heat Exposure,Number,WorldPop,,,y
+heat-vulnerability,Heat Vulnerability,Heat vulnerability component of the overall heat risk,Vulnerability,Overall Heat Risk,Score,MODEL,,,y

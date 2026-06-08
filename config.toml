@@ -198,45 +198,70 @@ code_template = "{object_id}"
   code_template = "{object_id}"
   code_prefix_parts = 2
 
-# Each entry describes one state's CSVs.
+# Each entry describes one state and its hazard modules.
 #
 # name         Display name of the state. It must match (case-insensitively)
 #              a STATE Geography loaded by `import_geojson`. Must be unique.
-# indicators   Path to the state's indicator-definitions CSV (relative to this
-#              file), read by the `import_indicators` command
-# data         Path to the state's indicator-values CSV (relative to this
-#              file), read by the `import_data` command
 # resource_id  Optional. DataSpace resource ID used by the frontend analytics
 #              page to fetch dynamically-generated charts.
 # hidden       Optional, default false. When true, the state is imported
 #              normally (so you can stage its data) but hidden from the
 #              GraphQL state list, so the frontend doesn't advertise it.
+#
+# [[states.modules]] fields (one per module, e.g. flood / heat)
+#   module      Hazard module name. Tags every imported indicator and data row
+#               (Indicators.module / Data.module); the frontend filters by it.
+#   indicators  Path to the module's indicator-definitions CSV (relative to
+#               this file), read by `import_indicators`.
+#   data        Path to the module's indicator-values CSV (relative to this
+#               file), read by `import_data`. A module whose files don't exist
+#               yet is skipped with a warning.
 [[states]]
 name = "Assam"
-indicators = "indicators/Assam_indicators.csv"
-data = "data/Assam_data.csv"
 resource_id = "5d343516-2587-48e0-a92e-96d2a07eb6da"
+
+  [[states.modules]]
+  module = "flood"
+  indicators = "indicators/flood/Assam_indicators.csv"
+  data = "data/flood/Assam_data.csv"
+
+#  [[states.modules]]
+#  module = "heat"
+#  indicators = "indicators/heat/Assam_indicators.csv"
+#  data = "data/heat/Assam_data.csv"
 
 [[states]]
 name = "Bihar"
-indicators = "indicators/Bihar_indicators.csv"
-data = "data/Bihar_data.csv"
 resource_id = "placeholder"
+
+  [[states.modules]]
+  module = "flood"
+  indicators = "indicators/flood/Bihar_indicators.csv"
+  data = "data/flood/Bihar_data.csv"
 
 [[states]]
 name = "Himachal Pradesh"
-indicators = "indicators/Himachal_Pradesh_indicators.csv"
-data = "data/Himachal_pradesh_data.csv"
 resource_id = "452cddd4-ef23-47e0-9702-61fa74230851"
+
+  [[states.modules]]
+  module = "flood"
+  indicators = "indicators/flood/Himachal_Pradesh_indicators.csv"
+  data = "data/flood/Himachal_pradesh_data.csv"
 
 [[states]]
 name = "Odisha"
-indicators = "indicators/odisha_indicators.csv"
-data = "data/odisha_data.csv"
 resource_id = "34ce79a3-81cd-4ca1-bf0a-6a66b97cae63"
+
+  [[states.modules]]
+  module = "flood"
+  indicators = "indicators/flood/odisha_indicators.csv"
+  data = "data/flood/odisha_data.csv"
 
 [[states]]
 name = "Uttar Pradesh"
-indicators = "indicators/Uttar_Pradesh_indicators.csv"
-data = "data/Uttar_pradesh_data.csv"
 resource_id = "placeholder"
+
+  [[states.modules]]
+  module = "flood"
+  indicators = "indicators/flood/Uttar_Pradesh_indicators.csv"
+  data = "data/flood/Uttar_pradesh_data.csv"
