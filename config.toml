@@ -216,6 +216,12 @@ code_template = "{object_id}"
 #   data        Path to the module's indicator-values CSV (relative to this
 #               file), read by `import_data`. A module whose files don't exist
 #               yet is skipped with a warning.
+#   raster_folder  Directory of GeoTIFF files (relative to this file). Required
+#               for modules with raster indicators. CSV ``{slug}-raster`` columns
+#               store filenames only (e.g. ``LST_ASSAM_2024_06.tif``).
+#   district_uses_state_level_raster_file  Optional, default false. When true,
+#               raster tiles for districts/blocks use the state GeoTIFF clipped
+#               to the requested geography boundary.
 [[states]]
 name = "Assam"
 resource_id = "5d343516-2587-48e0-a92e-96d2a07eb6da"
@@ -225,10 +231,12 @@ resource_id = "5d343516-2587-48e0-a92e-96d2a07eb6da"
   indicators = "indicators/flood/Assam_indicators.csv"
   data = "data/flood/Assam_data.csv"
 
-#  [[states.modules]]
-#  module = "heat"
-#  indicators = "indicators/heat/Assam_indicators.csv"
-#  data = "data/heat/Assam_data.csv"
+  [[states.modules]]
+  module = "heat"
+  indicators = "indicators/heat/Assam_indicators.csv"
+  data = "data/heat/Assam_data.csv"
+  raster_folder = "data/heat/raster/Assam"
+  district_uses_state_level_raster_file = true
 
 [[states]]
 name = "Bihar"
@@ -256,6 +264,13 @@ resource_id = "34ce79a3-81cd-4ca1-bf0a-6a66b97cae63"
   module = "flood"
   indicators = "indicators/flood/odisha_indicators.csv"
   data = "data/flood/odisha_data.csv"
+
+  [[states.modules]]
+  module = "heat"
+  indicators = "indicators/heat/Odisha_indicators.csv"
+  data = "data/heat/Odisha_data.csv"
+  raster_folder = "data/heat/raster/Odisha"
+  district_uses_state_level_raster_file = true
 
 [[states]]
 name = "Uttar Pradesh"

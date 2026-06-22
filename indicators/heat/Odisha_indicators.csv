@@ -2,7 +2,7 @@ indicatorSlug,indicatorTitle,indicatorDescription,descriptionlen,indicatorCatego
 heat-risk-score,Overall Heat Risk,"Risk of disasters is a function of - hazard, vulnerability, exposure, and coping capacity (government response)",111,Overall Heat Risk,,Score,MODEL,,,y,,y,,,,,,,n,
 heat-hazard,Hazard,Hazards or Potential of a physical event that may cause loss of life or property,80,Hazard,Overall Heat Risk,Score,MODEL,,,y,monthly,y,,,,,,,n,
 heat-days-score,Heat Index Threshold Breach Score,Function of number of times cum type of threshold breach of the local climatology of Heat Index,95,Hazard,Hazard,Number,ERA5_Land,https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=overview,,y,monthly,,,sum,,,,,n,
-land-surface-temperature,Land Surface Temperature,1km resolution Land Surface Temperature,,Hazard,Hazard,Celcius,Modis Aqua,,,y,monthly,n,,mean,,,,,y,y
+land-surface-temperature-raster,Land Surface Temperature,1km resolution Land Surface Temperature,,Hazard,Hazard,Celcius,Modis Aqua,,,y,monthly,n,,mean,,,,,y,y
 exposure,Exposure,"The situation of people, infrastructure, housing, production capacities, and other tangible human assets located in hazard-prone areas",134,Exposure,Overall Heat Risk,Score,MODEL,,,y,monthly,y,,,,,,,n,
 sum-population,Population,Total number of people residing in the region,45,Exposure,Exposure,Number,WORLDPOP,,,y,annually,y,y,sum,,,,,n,
 vulnerability,Vulnerability,"Physical, Social, Economic, and Environmental vulnerabilities which increase susceptibility of an area or a community to impact of hazards",138,Vulnerability,Overall Heat Risk,Score,MODEL,,,y,monthly,y,,,,,,,n,
