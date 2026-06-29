@@ -224,7 +224,7 @@ code_template = "{object_id}"
 #               to the requested geography boundary.
 [[states]]
 name = "Assam"
-resource_id = "5d343516-2587-48e0-a92e-96d2a07eb6da"
+resource_id = "cf78dae3-3109-4330-99f0-39ac5967865b"
 
   [[states.modules]]
   module = "flood"
