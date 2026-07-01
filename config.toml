@@ -235,7 +235,7 @@ resource_id = "cf78dae3-3109-4330-99f0-39ac5967865b"
   module = "heat"
   indicators = "indicators/heat/Assam_indicators.csv"
   data = "data/heat/Assam_data.csv"
-  raster_folder = "data/heat/raster/Assam"
+  raster_folder = "data/heat/raster/assam"
   district_uses_state_level_raster_file = true
 
 [[states]]
@@ -244,8 +244,8 @@ resource_id = "placeholder"
 
   [[states.modules]]
   module = "flood"
-  indicators = "indicators/flood/Bihar_indicators.csv"
-  data = "data/flood/Bihar_data.csv"
+  indicators = "indicators/flood/bihar_indicators.csv"
+  data = "data/flood/bihar_data.csv"
 
 [[states]]
 name = "Himachal Pradesh"
@@ -253,8 +253,8 @@ resource_id = "452cddd4-ef23-47e0-9702-61fa74230851"
 
   [[states.modules]]
   module = "flood"
-  indicators = "indicators/flood/Himachal_Pradesh_indicators.csv"
-  data = "data/flood/Himachal_pradesh_data.csv"
+  indicators = "indicators/flood/himachal_pradesh_indicators.csv"
+  data = "data/flood/himachal_pradesh_data.csv"
 
 [[states]]
 name = "Odisha"
@@ -267,9 +267,9 @@ resource_id = "34ce79a3-81cd-4ca1-bf0a-6a66b97cae63"
 
   [[states.modules]]
   module = "heat"
-  indicators = "indicators/heat/Odisha_indicators.csv"
-  data = "data/heat/Odisha_data.csv"
-  raster_folder = "data/heat/raster/Odisha"
+  indicators = "indicators/heat/odisha_indicators.csv"
+  data = "data/heat/odisha_data.csv"
+  raster_folder = "data/heat/raster/odisha"
   district_uses_state_level_raster_file = true
 
 [[states]]
@@ -278,5 +278,5 @@ resource_id = "placeholder"
 
   [[states.modules]]
   module = "flood"
-  indicators = "indicators/flood/Uttar_Pradesh_indicators.csv"
-  data = "data/flood/Uttar_pradesh_data.csv"
+  indicators = "indicators/flood/uttar_pradesh_indicators.csv"
+  data = "data/flood/uttar_pradesh_data.csv"
