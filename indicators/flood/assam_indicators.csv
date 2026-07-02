@@ -1,8 +1,7 @@
 indicatorSlug,indicatorTitle,indicatorDescription,descriptionlen,indicatorCategory,parent,unit,datasource,dataSourceLink,IDS_dataSpace,visible_on_platform,updateFreq,used_for_model,currently feeding into the model,District Level Aggregation,License,cumulativeIndicator,State (Owned),Comments
 risk-score,Composite Flood Risk,"Composite flood risk is a function of - hazard, vulnerability, exposure, and coping capacity (government response)
 Click a district to understand factors contributing to flood risk.",181,Composite Flood Risk,,Score,MODEL,,,y,,y,,,,,,
-topsis-score,Topsis model output,Output score of the topsis model. Useful for knowing the exact risk score value for ranking geographies by actual risk. Not for external use,140,Overall Flood Risk,Overall Flood Risk,Score,MODEL,,,n,monthly,y,,,,,,
-topsis-score,topsis-score,Output score of the topsis model. Useful for knowing the exact risk score value for ranking geographies by actual risk. Not for external use,140,Composite Flood Risk,Composite Flood Risk,Score,MODEL,n,,monthly,monthly,y,,,,,,
+topsis-score,Topsis Score,Output score of the topsis model. Useful for knowing the exact risk score value for ranking geographies by actual risk. Not for external use,140,Composite Flood Risk,Composite Flood Risk,Score,MODEL,n,,n,monthly,y,,,,,,
 flood-hazard,Hazard,"Hazard includes the historical incidences of flood , as well as the geophysical properties of the environment that increases the likelihood of a disaster",153,Hazard,Composite Flood Risk,Score,MODEL,,,y,monthly,y,,,,,,"30-May: Add ""Score"""
 max-rain,Maximum rainfall value in the region,Maximum rainfall value in the region,36,Hazard,Hazard,mm,IMD,https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_Bin.html,,,monthly,y,y,max,GODL,,,
 mean-rain,Mean rainfall value in the region,Mean rainfall value in the region,33,Hazard,Hazard,mm,IMD,https://www.imdpune.gov.in/cmpg/Griddata/Rainfall_25_Bin.html,,,monthly,y,y,mean,GODL,,,
