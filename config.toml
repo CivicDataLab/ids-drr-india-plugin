@@ -228,13 +228,13 @@ resource_id = "cf78dae3-3109-4330-99f0-39ac5967865b"
 
   [[states.modules]]
   module = "flood"
-  indicators = "indicators/flood/Assam_indicators.csv"
-  data = "data/flood/Assam_data.csv"
+  indicators = "indicators/flood/assam_indicators.csv"
+  data = "data/flood/assam_data.csv"
 
   [[states.modules]]
   module = "heat"
-  indicators = "indicators/heat/Assam_indicators.csv"
-  data = "data/heat/Assam_data.csv"
+  indicators = "indicators/heat/assam_indicators.csv"
+  data = "data/heat/assam_data.csv"
   raster_folder = "data/heat/raster/assam"
   district_uses_state_level_raster_file = true
 
