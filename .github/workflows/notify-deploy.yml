@@ -11,6 +11,12 @@ jobs:
     if: vars.DEPLOY_REPO != ''
     runs-on: ubuntu-latest
     steps:
-      - run: gh api "repos/${{ github.repository_owner }}/${{ vars.DEPLOY_REPO }}/dispatches" -f event_type=plugin-updated
+      # before/after let the deploy re-import only what this push changed.
+      - run: >-
+          gh api "repos/${{ github.repository_owner }}/${{ vars.DEPLOY_REPO }}/dispatches"
+          -f event_type=plugin-updated
+          -f "client_payload[before]=$BEFORE" -f "client_payload[after]=$AFTER"
         env:
           GH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_PAT }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
