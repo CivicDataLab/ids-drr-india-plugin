@@ -23,6 +23,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     Image,
+    KeepTogether,
     ListFlowable,
     ListItem,
     PageBreak,
@@ -490,20 +491,19 @@ async def add_section_3_charts(elements, time_period, geo_filter, charts, resour
                     },
                 ],
             }
+            # Keep each chart's title, description and image on one page.
+            block = [
+                Paragraph(chart_config["title"], heading_3_style),
+                Paragraph(chart_config["description"], body_style),
+            ]
             try:
                 chart = await fetch_chart(client, chart_payload, resource_id)
-
-                elements.append(Paragraph(chart_config["title"], heading_3_style))
-                elements.append(Paragraph(chart_config["description"], body_style))
-                elements.append(Image(chart, width=500, height=300))
-                # Add Spacer only if it's not the last chart
-                if i != len(charts) - 1:
-                    elements.append(Spacer(1, 5))
-
+                block.append(Image(chart, width=500, height=300))
             except Exception as e:  # noqa: BLE001
-                elements.append(
-                    Paragraph("Error fetching chart: " + str(e), body_style)
-                )
+                block.append(Paragraph("Error fetching chart: " + str(e), body_style))
+            elements.append(KeepTogether(block))
+            # Add Spacer only if it's not the last chart
+            if i != len(charts) - 1:
                 elements.append(Spacer(1, 5))
     return elements
 
@@ -531,6 +531,11 @@ async def add_section_2_charts_time_series(
 
     async with httpx.AsyncClient() as client:
         for i, chart_config in enumerate(charts):
+            # Keep each chart's title, description and image on one page.
+            block = [
+                Paragraph(chart_config["title"], heading_3_style),
+                Paragraph(chart_config["description"], body_style),
+            ]
             try:
                 chart_payload = {
                     "chart_type": chart_config["chart_type"],
@@ -553,14 +558,12 @@ async def add_section_2_charts_time_series(
                     ],
                 }
                 chart = await fetch_chart(client, chart_payload, resource_id)
-                elements.append(Paragraph(chart_config["title"], heading_3_style))
-                elements.append(Paragraph(chart_config["description"], body_style))
-                elements.append(Image(chart, width=500, height=275))
-                # Add Spacer only if it's not the last chart
-                if i != len(charts) - 1:
-                    elements.append(Spacer(1, 5))
+                block.append(Image(chart, width=500, height=275))
             except Exception as e:  # noqa: BLE001
-                elements.append(Paragraph(f"Error fetching chart: {e!s}", body_style))
+                block.append(Paragraph(f"Error fetching chart: {e!s}", body_style))
+            elements.append(KeepTogether(block))
+            # Add Spacer only if it's not the last chart
+            if i != len(charts) - 1:
                 elements.append(Spacer(1, 5))
 
     return elements
